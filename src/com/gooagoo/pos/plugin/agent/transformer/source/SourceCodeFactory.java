@@ -16,13 +16,13 @@ public class SourceCodeFactory {
 //        Pencil.writeLog("name--->"+name);
 //        int pid =Integer.parseInt(name.substring(0, name.indexOf('@'))); 
 //		String exeName=Const.gen().getExeName();
-		
 		int pid = Const.gen().getPid();
 		StringBuilder cup = new StringBuilder(512);
 		cup.append("{\n").append("	   try{\n");
 		cup.append("MyTask.pool.execute(new MyTask(\""+methodName+"\",$args,"+pid+"));");
 		cup.append("	   }catch(Exception e){\n").append("}\n").append("	}\n");
 		return cup.toString();
+		
 //		int len = parameterTypes.length;
 //		StringBuilder cup = new StringBuilder(512);
 //		cup.append("{\n").append("	   try{\n");

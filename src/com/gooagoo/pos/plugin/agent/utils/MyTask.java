@@ -55,7 +55,6 @@ public class MyTask implements Runnable{
 				}
 			}
 			if (!skip) {
-				
 				Pencil.writeServer("pid:"+pid+" "+getTime() +"	"+ methodName + ":P[" + i
 						+ "]=" + JSONUtil.toString(objs[i - 1]),
 						Charset.forName("GBK"));

@@ -112,7 +112,7 @@ public abstract class JSON implements JSONStreamAware, JSONAware {
         features |= SerializerFeature.IgnoreErrorGetter.getMask();
         features |= SerializerFeature.IgnoreNonFieldGetter.getMask();
 //      features |= SerializerFeature.DisableCircularReferenceDetect.getMask(); 不要disable,虽然重复引用对象时就不会被$ref代替,
-//但是在循环引用时也会导致StackOverflowError异常。
+//		但是在循环引用时也会导致StackOverflowError异常。
         DEFAULT_GENERATE_FEATURE = features;
     }
     

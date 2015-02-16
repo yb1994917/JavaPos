@@ -296,7 +296,7 @@ public class JSONSerializer extends SerializeFilterable {
                 out.writeNull();
                 return;
             }
-
+            
             Class<?> clazz = object.getClass();
 
             ObjectSerializer writer = getObjectWriter(clazz);

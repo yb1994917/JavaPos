@@ -1,27 +1,15 @@
 package com.gooagoo.pos.plugin.agent;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-
-import com.gooagoo.pos.plugin.agent.transformer.Const;
-import com.gooagoo.pos.plugin.agent.transformer.Constants;
-import com.gooagoo.pos.plugin.agent.transformer.JPosTransformer;
-import com.gooagoo.pos.plugin.agent.utils.CMDUtils;
-import com.gooagoo.pos.plugin.agent.writer.Pencil;
-import com.gooagoo.pos.plugin.agent.writer.WriterFactory;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.Buffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,12 +17,11 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import javax.print.attribute.standard.Severity;
-
-import com.gooagoo.javassist.ClassPool;
-import com.gooagoo.javassist.NotFoundException;
+import com.gooagoo.pos.plugin.agent.transformer.Const;
+import com.gooagoo.pos.plugin.agent.transformer.Constants;
+import com.gooagoo.pos.plugin.agent.transformer.JPosTransformer;
+import com.gooagoo.pos.plugin.agent.writer.Pencil;
 import com.gooagoo.pos.plugin.agent.writer.WriterFactory.WriterFactoryProperties;
-import com.sun.org.apache.bcel.internal.util.ClassPath;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
@@ -78,10 +65,9 @@ public class JavaPosAgent {
 
 		VirtualMachine jvm = null;
 		if (args.length < 1) {
-			System.out.println("step 1/4. 请指定代理.");
+			System.out.println("step 1/5. 请指定代理.");
 			return;
 		} else {
-			
 			
 			//判断inipath是否存在
 			if (args.length==1) {//如果只传了一个参数,默认会从当前路劲下找config.ini
@@ -93,10 +79,10 @@ public class JavaPosAgent {
 			}
 			File iniFile = new File(iniPath);
 			if (!iniFile.exists()) {
-				System.out.println("step 2/4. 配置文件:[" + iniPath + "]不存在!");
+				System.out.println("step 2/5. 配置文件:[" + iniPath + "]不存在!");
 				return;
 			} else {
-				System.out.println("step 2/4. 配置文件:[" + iniPath + "]");
+				System.out.println("step 2/5. 配置文件:[" + iniPath + "]");
 			}
 			
 			
@@ -104,10 +90,10 @@ public class JavaPosAgent {
 			agent = args[0];
 			File agentFile = new File(agent);
 			if (!agentFile.exists()) {
-				System.out.println("step 1/4. 代理:[" + agent + "]不存在!");
+				System.out.println("step 3/5. 代理:[" + agent + "]不存在!");
 				return;
 			} else {
-				System.out.println("step 1/4. 代理:[" + agent + "]");
+				System.out.println("step 3/5. 代理:[" + agent + "]");
 			}
 		}
 		
@@ -137,15 +123,15 @@ public class JavaPosAgent {
 									jvm.loadAgent(agent,iniFile.getAbsolutePath());
 									jvm.detach();
 								}else{
-									System.out.println("step 4/4. 文件:[" + iniPath + "]不存在!");	
+									System.out.println("step 4/5. 文件:[" + iniPath + "]不存在!");	
 								}
 							} else {
-								System.out.println("step 4/4. 文件:[" + agent + "]不存在!");
+								System.out.println("step 4/5. 文件:[" + agent + "]不存在!");
 							}
 						}
-						System.out.println("step 4/4. 加载java代理成功!");
+						System.out.println("step 5/5. 加载java代理成功!");
 					} catch (Exception e) {
-						System.out.println("step 4/4. 加载java代理失败!");
+						System.out.println("step 5/5. 加载java代理失败!");
 						continue;
 					}
 					
@@ -162,9 +148,9 @@ public class JavaPosAgent {
 			String[] split = args[2].split("-");
 			jvm = select(split[0],split[1]);
 			if (jvm != null) {
-				System.out.println("step 3/4. 虚拟机pid:[" + jvm.id() + "]");
+				System.out.println("step 3/5. 虚拟机pid:[" + jvm.id() + "]");
 			} else {
-				System.out.println("step 3/4. 根据[" + vmc + "]没有找到java虚拟机.");
+				System.out.println("step 3/5. 根据[" + vmc + "]没有找到java虚拟机.");
 				return;
 			}
 		}
@@ -172,14 +158,14 @@ public class JavaPosAgent {
 		if (args.length > 3) {
 			server = args[3];
 			writerFactorySettings.setServer(server);
-			System.out.println("step 3/4. 数据接收机:" + "[" + server + "]");
+			System.out.println("step 4/5. 数据接收机:" + "[" + server + "]");
 		}
 		
 		if (args.length > 4) {
 			String p = args[4];
 			try {
 				port = Integer.parseInt(p);
-				System.out.println("step 3/4. 数据接收机端口号:" + "[" + port + "]");
+				System.out.println("step 4/5. 数据接收机端口号:" + "[" + port + "]");
 			} catch (Exception e) {
 			}
 			writerFactorySettings.setPort(port);
@@ -205,17 +191,17 @@ public class JavaPosAgent {
 						jvm.loadAgent(agent,sb.toString());
 						jvm.detach();
 					} else {
-						System.out.println("step 4/4. agent文件:[" + agent + "]不存在!");
+						System.out.println("step 5/5. agent文件:[" + agent + "]不存在!");
 						return;
 					}
 				}else{
-					System.out.println("step 4/4. ini文件:[" + iniPath + "]不存在!");
+					System.out.println("step 5/5. ini文件:[" + iniPath + "]不存在!");
 					return;
 				}
 			}
-			System.out.println("step 4/4. 加载java代理成功!");
+			System.out.println("step 5/5. 加载java代理成功!");
 		} catch (Exception e) {
-			System.out.println("step 4/4. 加载java代理失败!");
+			System.out.println("step 5/5. 加载java代理失败!");
 			e.printStackTrace();
 		}
 
@@ -230,7 +216,6 @@ public class JavaPosAgent {
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
-			
 	
 	}
 
@@ -292,7 +277,6 @@ public class JavaPosAgent {
 							Const.gen().setInjectClass("");
 							Const.gen().setInjects(al);
 						}	
-						
 					}
 				}
 		} catch (Exception e) {
@@ -388,7 +372,7 @@ public class JavaPosAgent {
 					getExeName(String.valueOf(pid));
 					getUserDir();
 				Pencil.writeServer("{\"pid\":"+Const.gen().getPid()+",\"user.dir\":"+"\""+Const.gen().getUserDir()+"\"}", Charset.forName("GBK"));
-					Thread.sleep(2000);
+					Thread.sleep(6000);
 				} catch (InterruptedException e1) {
 					Pencil.writeLog(e1);
 				}

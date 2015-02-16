@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<project name="TestAnt" default="reRun">
+<!-- properies -->
+<property name="src.dir" value="src" />
+<property name="classes.dir" value="classes" />
+<property name="lib.dir" value="lib" />
+<property name="dist.dir" value="dist" />
+<!-- 定义classpath -->
+<path id="master-classpath">
+<fileset file="${lib.dir}/*.jar" />
+<pathelement path="${classes.dir}"/>
+</path>
+<!-- 初始化任务 -->
+<target name="init">
+<mkdir dir="${classes.dir}"/>
+<mkdir dir="${lib.dir}"/>
+<mkdir dir="${dist.dir}"/>
+</target>
+	
+<!-- 编译 -->
+<target name="compile" depends="init" description="compile the source files">
+<javac srcdir="${src.dir}" destdir="${classes.dir}" target="1.7" includeantruntime="on">
+ <compilerarg line="-encoding UTF-8 "/>   
+<classpath refid="master-classpath"/>
+</javac> 
+</target>
+
+<!-- 打包成jar -->
+<target name="jar"  description="make .jar file">
+<mkdir dir="${dist.dir}" />
+<jar destfile="${dist.dir}/javaagent.jar" basedir="${classes.dir}">
+	  <manifest>
+	                <attribute name="Build-By" value="${user.name}"/>
+	                <attribute name="Main-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	                <attribute name="Premain-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	                <attribute name="Agent-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	                <attribute name="Can-Redefine-Classes" value="true"/>
+	                <attribute name="Can-Retransform-Classes" value="true"/>
+	                <attribute name="Can-Set-Native-Method-Prefix" value="true"/>
+	                <attribute name="Class-Path" value=" lib/tools.jar"/>
+	            </manifest>
+</jar>
+</target>
+
+<target name="clean" description="Delete the output directories">  
+        <delete dir="${dist.dir}"/>
+	    <delete dir="${classes.dir}"/>
+</target>  
+
+<!-- 运行 -->
+<target name="reRun" depends="clean,init,compile,jar">
+       <ant target="clean"></ant>
+	   <ant target="init"></ant>
+	   <ant target="compile"></ant>
+	   <ant target="jar"></ant>
+</target>
+</project>

@@ -1,14 +1,18 @@
 package com.gooagoo.pos.plugin.agent.utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import com.gooagoo.pos.plugin.agent.transformer.Const;
 
 public class CMDUtils {
+	public static Executor executor=Executors.newSingleThreadExecutor();
     public static Process CMD(String cmd,boolean isNeedMsg){
         Process p = null;
         try {
@@ -74,7 +78,7 @@ public class CMDUtils {
 
                 if ("success".equals(isSuccess)) {
                 while ((line=reader.readLine())!=null) {
-                	System.out.println(line);
+//                	System.out.println(line);
 						if (line.startsWith("pos.exe")) {
 //							System.out.println(line);
 							String[] split = line.split("Console");
@@ -112,7 +116,7 @@ public class CMDUtils {
                 	  while ((line=reader.readLine())!=null) {
 //  							System.out.println(line);
   							if (line.contains("AttachNotSupportedException: Unable to attach to 32-bit process running under WOW64")) {
-								System.out.println("请用对应位数的jdk再次尝试获取"+pid+"进程的java环境");
+								System.out.println("请用32位数的jdk再次尝试获取"+pid+"进程的java环境");
 							}else if (line.contains("java.io.IOException: Command failed in target VM")) {
 								System.out.println("进程号"+pid+":jre6");
 							}else if (line.contains("com.sun.tools.attach.AttachNotSupportedException: jvm.dll not loaded by target process")) {
@@ -130,24 +134,40 @@ public class CMDUtils {
     }
 
     //args String pid
-	public static void doNext() {
+	public static void doNext(String dir) {
 		try {
 //			 String cmd = "cmd.exe CD D:\\ProgramFile\\Java11\\java7.0_51\\bin";
 //			Runtime.getRuntime().exec(cmd);
 //			cmd = "cmd.exe CD D:";
 //			Runtime.getRuntime().exec(cmd);
 			Runtime rn = Runtime.getRuntime();
-			rn.exec("cmd.exe /k cd /" );
-			rn.exec("cmd.exe /k cd d:/ProgramFile/Java11/java7.0_51/bin");  //进入jdk7-32的目录,一般的收银都是32位的
-			//jcmd在jdk7才出现,对jdk8的环境也能使用jcmd,jdk6就不行了
-			rn.exec("cmd.exe /k D:");
+//			rn.exec("cmd.exe /k cd /");
+//			rn.exec("cmd.exe /k cd d:/ProgramFile/Java11/jdk1.7.0_45/bin");  //进入jdk7-32的目录,一般的收银都是32位的
+//			//jcmd在jdk7才出现,对jdk8的环境也能使用jcmd,jdk6就不行了
+//			rn.exec("cmd.exe /k D:");
 			ArrayList<String> pids = Const.gen().getPids();
-			for (int i = 0; i < pids.size(); i++) {
-				String pid = pids.get(i);
-				Process p = rn.exec("jcmd "+String.valueOf(pid)+ " VM.system_properties");
-				new Thread(new cmdResult(p.getInputStream(),"success",pid)).start();
-	            new Thread(new cmdResult(p.getErrorStream(),"error",pid)).start();
+			if (dir==null) {
+				for (int i = 0; i < pids.size(); i++) {
+					String pid = pids.get(i);
+					Process p = rn.exec("cmd.exe /c jcmd "+String.valueOf(pid)+ " VM.system_properties");
+					executor.execute(new cmdResult(p.getInputStream(),"success",pid));
+					executor.execute(new cmdResult(p.getErrorStream(),"error",pid));
+				}
+			}else{
+				File file=new File(dir);
+				if (!file.exists()) {
+					System.out.println("您指定的目录不存在!!");
+					return;
+				}
+				for (int i = 0; i < pids.size(); i++) {
+					String pid = pids.get(i);
+					Process p = rn.exec("cmd.exe /c jcmd "+String.valueOf(pid)+ " VM.system_properties",null,file);
+					executor.execute(new cmdResult(p.getInputStream(),"success",pid));
+					executor.execute(new cmdResult(p.getErrorStream(),"error",pid));
+				}
 			}
+		
+		
 			
 			
 //			String[] arr=new String[]{"cmd.exe","/k","cd /","cd D:/ProgramFile/Java11/java7.0_51/bin","D:","jcmd "+pid+ " VM.system_properties"};
