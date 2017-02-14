@@ -1,0 +1,9 @@
+Manifest-Version: 1.0  
+Premain-Class: com.gooagoo.pos.plugin.agent.JavaPosAgent
+Agent-Class: com.gooagoo.pos.plugin.agent.JavaPosAgent
+Main-Class: com.gooagoo.pos.plugin.agent.JavaPosAgent
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true
+Can-Set-Native-Method-Prefix: true
+Class-Path: lib/tools.jar
+
