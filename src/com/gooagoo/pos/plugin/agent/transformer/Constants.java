@@ -17,7 +17,8 @@ public class Constants {
 		"java.math",
 		"$Proxy",
 		"[",
-		"javax"
+		"javax",
+		"Serializer"
 	};
 	
 }

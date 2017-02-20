@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 
 import com.gooagoo.pos.plugin.agent.writer.Pencil;
 
+//测试socket的类
 public class TestSocket {
 	public static void main(String[] args) {
 

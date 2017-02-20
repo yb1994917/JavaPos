@@ -17,10 +17,7 @@ public class Constants1 {
 		"org.xml", 
 		"org.json",
 		"java.awt",
-		"com.pos",
-		"int", 
-	    "byte", 
-	    "boolean", 
-	    "double"
+		"com.pos"
+		
 	};
 }

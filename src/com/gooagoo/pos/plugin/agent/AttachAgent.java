@@ -15,7 +15,7 @@ public class AttachAgent {
       listBefore = vms;
       jar = attachJar;
     }
-
+    
     public void run() {
       VirtualMachine vm = null;
       List<VirtualMachineDescriptor> listAfter = null;
@@ -27,7 +27,6 @@ public class AttachAgent {
             
             System.out.println("displayName:" + vmd.displayName());
             System.out.println("toString:" + vmd.toString());
-            
             
             if (!listBefore.contains(vmd)) {
               vm = VirtualMachine.attach(vmd);

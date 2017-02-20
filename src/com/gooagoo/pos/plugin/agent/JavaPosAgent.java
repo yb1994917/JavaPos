@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
@@ -12,8 +13,10 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -25,8 +28,11 @@ import com.gooagoo.pos.plugin.agent.writer.WriterFactory.WriterFactoryProperties
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
+import sun.tools.java.ClassDeclaration;
+
 public class JavaPosAgent {
-//注入的到收银软件,收银软件的进程里没有tools.jar,找不到类,单独抽取出来注入
+	//注入的到收银软件,收银软件的进程里没有tools.jar,找不到类,单独抽取出来注入
+	 private static volatile Instrumentation globalInstr;
 	private static VirtualMachine select(String jvmkey, String jvmvalue) {
 		VirtualMachine jvm = null;
 		
@@ -70,10 +76,10 @@ public class JavaPosAgent {
 		} else {
 			
 			//判断inipath是否存在
-			if (args.length==1) {//如果只传了一个参数,默认会从当前路劲下找config.ini
+			if (args.length==1) {//如果只传了一个参数,默认会从当前路劲下找config.ini,脚本的路径
 				String property = System.getProperty("user.dir");
 				System.out.println(System.getProperty("user.dir"));
-				iniPath="./config.ini";
+				iniPath="./javapos.ini";
 			}else{
 				iniPath=args[1];
 			}
@@ -205,21 +211,11 @@ public class JavaPosAgent {
 			e.printStackTrace();
 		}
 
-//		读不出来
-//		File file=new File("./config.ini");
-//		try {
-//			BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),Charset.forName("GBK")));
-//		String line=null;
-//		while((line=reader.readLine())!=null){
-//			Pencil.writeLog(line);
-//		}
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-	
 	}
 
 	public static void premain(String args, Instrumentation inst) {
+		globalInstr=inst;
+		deleteLastLogs();
 		Pencil.writeLog("Premain loaded...");
 		Pencil.writeLog("premain"+args);
 		if (args!=null && !"".equals(args)) {
@@ -234,51 +230,65 @@ public class JavaPosAgent {
 		inst.addTransformer(transformer);
 	}
 
+	private static void deleteLastLogs() {
+		File file = new File("./logs");
+		if(file.exists()) {
+			File[] listFiles = file.listFiles();
+			for (File file2 : listFiles) {
+				file2.delete();
+			}
+		}	  
+	}
+
 	private static void iniToConst(File file) {
 		BufferedReader reader =null;
 		try {
 			 reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),Charset.forName("GBK")));
 			String line=null;
-			while((line=reader.readLine())!=null){   //TODO 把key都存着 判断有没有这个key,获取value
-					if (line.startsWith("columnName:")) {
-						String[] split = line.split(":");
-						if (split.length>1) {
-							Const.gen().setcolumnName(split[1]);	
-						}else{
-							Pencil.writeLog(new RuntimeException("没配置列表名"));
-							Const.gen().setcolumnName("");
-					}
-//							}else if (line.startsWith("InjectClass:")) {
-//								String[] split = line.split(":");
-//								if (split.length>1) {
-//									Const.gen().setInjectClass(split[1]);
-//								}else{
-//									Pencil.writeLog(new RuntimeException("没配置Inject的类,默认改变所有类"));
-//									Const.gen().setInjectClass("");
-//								}
-					}else if (line.startsWith("InjectClass:")) {
-						ArrayList<String> al = new ArrayList<String>();
-						String[] split = line.split(":");
-						if (split.length>1 && split[1]!=null) {
-							if (split[1].contains(",")) {
-								String[] split2 = split[1].split(",");
-								System.out.println("split2:"+split2.length);
-								for (String str : split2) {
-									Pencil.writeLog1("conf--->"+str);
-									al.add(str);
-								}
-							}else{
-								al.add(split[1]);
-							}
-							Const.gen().setInjects(al);
-							Pencil.writeLog("injects的size:"+al.size());
-						}else{
-							Pencil.writeLog(new RuntimeException("没配置Inject的类,默认改变所有类"));
-							Const.gen().setInjectClass("");
-							Const.gen().setInjects(al);
-						}	
+			Map<String, String> map = new HashMap<String, String>();
+			// 分行读取 1 没有:号 不会有这个key  2 冒号右边没内容也没有这个key
+			while ((line = reader.readLine()) != null) {
+				if (line!=null && line.contains(":")) {
+					String[] split = line.split(":");
+					if (split!=null && split.length>1) {
+						map.put(split[0], split[1]);
 					}
 				}
+			}
+			
+			Pencil.writeLog("配置文件的行数"+map.size());
+			
+			if (map.containsKey("columnName")) {
+				Pencil.writeLog("配置了columnName,值为:"+map.get("columnName"));
+				Const.gen().setcolumnName(map.get("columnName"));
+			}else{
+				Pencil.writeLog("没有配置columnName");
+				Const.gen().setcolumnName("");
+			}
+			
+			ArrayList<String> al = new ArrayList<String>();
+			if (map.containsKey("InjectClass")) {
+				Pencil.writeLog("配置了InjectClass,值为:"+map.get("InjectClass"));
+				String key = map.get("InjectClass");
+					if (key.contains(",")) {
+						String[] split2 = key.split(",");
+						System.out.println("split2:"+split2.length);
+						for (String str : split2) {
+							Pencil.writeLog1("conf--->"+str);
+							al.add(str);
+						}
+					}else{
+						al.add(key);
+					}
+					Const.gen().setInjects(al);
+					Pencil.writeLog("injects的size:"+al.size());
+				}else{
+					Pencil.writeLog(new RuntimeException("没配置Inject的类,默认改变所有类"));
+					Const.gen().setInjectClass("");
+					Const.gen().setInjects(al);
+				}	
+			
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 		}finally {
@@ -290,8 +300,11 @@ public class JavaPosAgent {
 			}
 		}
 	}
+	
 
 	public static void agentmain(String args, final Instrumentation inst){
+		globalInstr=inst;
+		deleteLastLogs();
 		Pencil.writeLog("args:"+args);
 		 inipa = null;
 		 WriterFactoryProperties writerFactorySettings = new WriterFactoryProperties();
@@ -301,6 +314,7 @@ public class JavaPosAgent {
 				String[] split = args.split(",");
 				String ip;
 				String port;
+				
 				switch (split.length) {
 				case 1:
 					inipa = split[0];
@@ -329,27 +343,8 @@ public class JavaPosAgent {
 			Pencil.writeLog(new RuntimeException("请在脚本中指定配置文件的路径"));
 		}
 		
-		
-//		读jar包中的配置 不行
-//		InputStream is = Thread.currentThread().getClass().getClassLoader().getResourceAsStream("/config.ini");
-//		byte[] arr=new byte[100];
-//		
-//		int len=-1;
-//		try {
-//			if (is!=null) {
-//				while((len=is.read(arr))!=-1){
-//					Pencil.writeLog(new String(arr,Charset.forName("utf-8")));
-//				}
-//			}else{
-//				Pencil.writeLog("is==null");
-//			}
-//			
-//		} catch (IOException e2) {
-//			Pencil.writeLog("读文件"+e2.toString());
-//		}
-		
 		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();  
-        String name = runtime.getName(); // format: "pid@hostname"  
+        String name = runtime.getName();  // format: "pid@hostname"  
         final int pid =Integer.parseInt(name.substring(0, name.indexOf('@'))); 
         Const.gen().setPid(pid);
 		Pencil.writeLog("agent loaded...");
@@ -376,7 +371,7 @@ public class JavaPosAgent {
 				} catch (InterruptedException e1) {
 					Pencil.writeLog(e1);
 				}
-		
+				
 					for (int i = 0 ; i < allLoadedClasses.length ; i++) {
 						boolean skip = false;
 						for (String useless : Constants.UselessPackagePreix) {
@@ -390,6 +385,7 @@ public class JavaPosAgent {
 						}
 						Pencil.writeLog2(allLoadedClasses[i].getName());
 								try {
+									//把inst存起来 需要一个字节数组 ,包含新的类文件的 byte 数组。到时候就在transform中调用inst.redefineClass
 									inst.retransformClasses(allLoadedClasses[i]);
 									Pencil.writeLog2(allLoadedClasses[i]+"执行了retransformClasses");
 								} catch (UnmodifiableClassException e) {
@@ -405,6 +401,7 @@ public class JavaPosAgent {
 			String property = System.getProperty("user.dir");
 			Pencil.writeLog(property);
 			Const.gen().setUserDir(property);
+			
 	}
 
 	protected static void getExeName(String id) {
@@ -432,6 +429,9 @@ public class JavaPosAgent {
 		} catch (Exception e) {
 			Pencil.writeLog(e);
 		}
-	
 	}
+    public static Instrumentation getInstrumentation()
+    {
+        return globalInstr;
+    }
 }

@@ -1,6 +1,5 @@
 package com.gooagoo.pos.plugin.agent.transformer;
 
-import java.io.File;
 import java.io.OutputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -10,6 +9,7 @@ import java.util.ArrayList;
 import com.gooagoo.javassist.ClassPool;
 import com.gooagoo.javassist.CtClass;
 import com.gooagoo.javassist.CtMethod;
+import com.gooagoo.javassist.Modifier;
 import com.gooagoo.pos.plugin.agent.transformer.source.SourceCodeFactory;
 import com.gooagoo.pos.plugin.agent.writer.Pencil;
 
@@ -35,7 +35,6 @@ public class JPosTransformer  implements ClassFileTransformer {
 				}
 			}
 			
-			
 			ClassPool pool = ClassPool.getDefault();
 			pool.importPackage("com.gooagoo.pos.plugin.agent.writer.Pencil");
 			pool.importPackage("com.gooagoo.pos.plugin.agent.utils.JSON");
@@ -46,29 +45,7 @@ public class JPosTransformer  implements ClassFileTransformer {
 			Pencil.writeLog1(className);
 //			if ("".equals(Const.gen().getInjectClass())) {
 			if (Const.gen().getInjects().size()==0) {
-//没有配置
-			if (!cc.isInterface() && !cc.isEnum() && !cc.isAnnotation()) {
-			synchronized (cc) {
-				CtMethod[] ms = cc.getDeclaredMethods();
-					for (CtMethod m : ms) {
-						if (!m.isEmpty() && !"main".equals(m.getName())) {
-							if (m.getMethodInfo().isMethod()) {
-								CtClass[] parameterTypes = m.getParameterTypes();
-								if (parameterTypes != null && parameterTypes.length > 0) {
-									String before = SourceCodeFactory.createBefore(m.getLongName(), parameterTypes);
-										Pencil.writeLog("insert before:"+m.getLongName());
-										try{
-											m.insertBefore(before);
-										}catch(Exception e){ 
-											Pencil.writeLog(e);
-										}
-								}
-							}
-						}
-					}
-					}
-				}
-				return cc.toBytecode();
+				return insertCode(cc);
 			}else{ //配置了
 				ArrayList<String> injects = Const.gen().getInjects();
 				for (int i = 0; i < injects.size(); i++) {
@@ -77,28 +54,7 @@ public class JPosTransformer  implements ClassFileTransformer {
 				}
 					if (injects.contains(className)) {
 						Pencil.writeLog1("injects中含有:"+className);
-						if (!cc.isInterface() && !cc.isEnum() && !cc.isAnnotation()) {
-							synchronized (cc) {
-						CtMethod[] ms = cc.getDeclaredMethods();
-							for (CtMethod m : ms) {
-								if (!m.isEmpty() && !"main".equals(m.getName())) {
-									if (m.getMethodInfo().isMethod()) {
-										CtClass[] parameterTypes = m.getParameterTypes();
-										if (parameterTypes != null && parameterTypes.length > 0) {
-											String before = SourceCodeFactory.createBefore(m.getLongName(), parameterTypes);
-												Pencil.writeLog("insert before:"+m.getLongName());
-												try{
-													m.insertBefore(before);
-												}catch(Exception e){ 
-													Pencil.writeLog(e);
-												}
-										}
-									}
-								}
-							}
-							}
-						}
-						return cc.toBytecode();
+						return insertCode(cc);
 					}else{
 						return null;
 					}
@@ -108,5 +64,42 @@ public class JPosTransformer  implements ClassFileTransformer {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private byte[] insertCode(CtClass cc){
+		try {
+		if (!cc.isInterface() && !cc.isEnum() && !cc.isAnnotation()) {
+		synchronized (cc) {
+		CtMethod[] ms = cc.getDeclaredMethods();
+			for (CtMethod m : ms) {
+				if (!m.isEmpty() && !"main".equals(m.getName()) &&  !isNative(m) && !isAbstract(m)) {
+					if (m.getMethodInfo().isMethod()) {
+						CtClass[] parameterTypes = m.getParameterTypes();
+						if (parameterTypes != null && parameterTypes.length > 0) {
+							String before = SourceCodeFactory.createBefore(m.getLongName(), parameterTypes);
+								Pencil.writeLog("insert before:"+m.getLongName());
+								try{
+									m.insertBefore(before);
+								}catch(Exception e){ 
+									Pencil.writeLog(e);
+								}
+						}
+					}
+				}
+			}
+			}
+		return cc.toBytecode();
+		}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static boolean isNative(CtMethod method) {
+	    return Modifier.isNative(method.getModifiers());
+	}
+	public static boolean isAbstract(CtMethod method) {
+		return Modifier.isAbstract(method.getModifiers());
 	}
 }	

@@ -15,6 +15,7 @@ import com.gooagoo.jackson.databind.SerializationFeature;
 import com.gooagoo.pos.plugin.agent.transformer.Constants1;
 import com.gooagoo.pos.plugin.agent.writer.Pencil;
 
+//Jackson解析封装类
 public class JSON {
 
 	private static final JTable JTable = null;

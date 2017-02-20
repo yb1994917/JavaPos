@@ -9,7 +9,6 @@ import javax.swing.JTable;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.parser.JSONToken;
 import com.gooagoo.pos.plugin.agent.transformer.Const;
 import com.gooagoo.pos.plugin.agent.transformer.Constants1;
 import com.gooagoo.pos.plugin.agent.writer.Pencil;
@@ -34,20 +33,22 @@ public class JSONUtil {
 		}
    try {
 			if (obj instanceof JTable) { // if
-											// (className.equals("javax.swing.JTable"))
-											// {
+			// (className.equals("javax.swing.JTable"))
+			// {
 				String forJtable = forJtable(obj);
 				return forJtable;
 				// else if (obj instanceof Table) {
+			
 			} else {
-
+					
 				try {
 					String json = JSON.toJSONString(obj);
-					
+					parseJson(json);
 					json = json.replaceAll("(\r\n|\r|\n|\n\r|\0)", ""); // \0是NUL
 						if (json.startsWith("[")) {
 						json = "{\"detailinfo\":".concat(json).concat("}");
 						}
+						parseJson(json);
 					return json;
 				} catch (Exception e) {
 					write("发生异常的类" + obj.getClass().getName());
@@ -62,7 +63,9 @@ public class JSONUtil {
 			return "";
 		}
 	}
-
+//		/**
+//		*解析org.eclipse.swt.widgets.Table对象  		
+//		*/
 //	private static String forTable(Object obj) {  //不是每个收银 选一个商品 就传一次table的 ,这个方法都没走过
 ////		Pencil.writeLog("有Jtable对象 不为null");
 //		StringBuilder sb=new StringBuilder();
@@ -84,95 +87,6 @@ public class JSONUtil {
 //		    return sb.toString();
 //	}
 
-	private static void parseJson(String json) {
-		String[] arr=new String[]{"rowno","barcode","name","unit","sl","hjje","hjzk"};
-		try {
-			if (!json.contains("detailinfo")) {
-				return;
-			}
-			for (int i = 0; i < arr.length; i++) {
-				if (!json.contains(arr[i])) {
-					return ;
-				}
-			}
-			
-			JSONObject jsonobj = JSON.parseObject(json);
-			JSONArray jsonArray = jsonobj.getJSONArray("detailinfo");
-			StringBuilder sb=new StringBuilder();
-			
-			for (int i = 0; i < jsonArray.size(); i++) {
-				for (int j = 0; j < arr.length; j++) {
-					JSONObject object = (JSONObject) jsonArray.get(i);
-					String str = String.valueOf(object.get(arr[j]));
-					sb.append(str).append("  ");
-				}
-				Pencil.writeLog(sb.toString());
-			}	
-		} catch (Exception e) {
-			Pencil.writeLog(e);
-		}
-	}
-
-	private static String forJtable(Object obj) {
-		//				Pencil.writeLog("有Jtable对象 不为null");
-						Pencil.writeLog("javax.swing.JTable");
-						JTable jt=(JTable)obj;
-						if (jt.getRowCount()<= 0 || jt.getColumnCount()<=0) {
-							Pencil.writeLog("count<=0");
-							return "";
-						}
-		//				if (jt.getColumnCount()!=12) {
-		//					return "";
-		//				}
-		//		File file = new File(".\\config.ini");
-		//		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),Charset.forName("GBK")));
-				StringBuilder builder = new StringBuilder();
-				for (int i = 0; i <  jt.getColumnCount(); i++) {
-					builder.append(jt.getColumnName(i));
-				}
-				Pencil.writeLog("columnName"+Const.gen().getcolumnName());
-				if ("".equals(Const.gen().getcolumnName())) { //config没有配置columnName
-					return "";
-				}else{ //配置了
-					if (builder.toString().contains(Const.gen().getcolumnName())) {
-						Pencil.writeLog("配置了columnName");
-						StringBuilder sb = new StringBuilder();
-						sb.append("{");
-						sb.append("\"detailinfo\":");
-						sb.append("[");
-						for (int i = 0; i < jt.getRowCount(); i++) {
-							sb.append("{");
-							for (int j = 0; j < jt.getColumnCount(); j++) {
-								if (i == jt.getRowCount() - 1
-										&& j == jt.getColumnCount() - 1) {
-									sb.append("\"").append(jt.getColumnName(j))
-											.append("\"").append(": ").append("\"")
-											.append(String.valueOf(jt.getValueAt(i, j)).replace('\n',' ')).append("\"");
-								} else if (i != jt.getRowCount() - 1
-										&& j == jt.getColumnCount() - 1) { //jt.getColumnName(j)取得列名
-									sb.append("\"").append(jt.getColumnName(j))
-											.append("\"").append(": ").append("\"")
-											.append(String.valueOf(jt.getValueAt(i, j)).replace('\n',' ')).append("\"");
-								} else {
-									sb.append("\"").append(jt.getColumnName(j))
-											.append("\"").append(": ").append("\"")
-											.append(String.valueOf(jt.getValueAt(i, j)).replace('\n',' ')).append("\"")
-											.append(",");
-								}
-							}
-							if (i == jt.getRowCount() - 1) {
-								sb.append("}");
-							} else {
-								sb.append("},");
-							}
-						}
-						sb.append("]");
-						sb.append("}");
-						return sb.toString();
-					}	
-				}
-				return null;
-	}
 
 	public static String toString(int i) {
 		try {
@@ -225,5 +139,98 @@ public class JSONUtil {
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
+	}
+	
+	/**
+	 * 手动解析JTable对象
+	 * */
+	private static String forJtable(Object obj) {
+		Pencil.writeLog("javax.swing.JTable");
+		JTable jt = (JTable) obj;
+		if (jt.getRowCount() <= 0 || jt.getColumnCount() <= 0) {
+			Pencil.writeLog("count<=0");
+			return "";
+		}
+		// if (jt.getColumnCount()!=12) {
+		// return "";
+		// }
+		// File file = new File(".\\config.ini");
+		// BufferedReader reader = new BufferedReader(new InputStreamReader(new
+		// FileInputStream(file),Charset.forName("GBK")));
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < jt.getColumnCount(); i++) {
+			builder.append(jt.getColumnName(i));
+		}
+		Pencil.writeLog("columnName" + Const.gen().getcolumnName());
+		if ("".equals(Const.gen().getcolumnName())) { // config没有配置columnName
+			return "";
+		} else { // 配置了
+			if (builder.toString().contains(Const.gen().getcolumnName())) {
+				Pencil.writeLog("配置了columnName");
+				StringBuilder sb = new StringBuilder();
+				sb.append("{");
+				sb.append("\"detailinfo\":");
+				sb.append("[");
+				for (int i = 0; i < jt.getRowCount(); i++) {
+					sb.append("{");
+					for (int j = 0; j < jt.getColumnCount(); j++) {
+						if (i == jt.getRowCount() - 1 && j == jt.getColumnCount() - 1) {
+							sb.append("\"").append(jt.getColumnName(j)).append("\"").append(": ").append("\"")
+									.append(String.valueOf(jt.getValueAt(i, j)).replace('\n', ' ')).append("\"");
+						} else if (i != jt.getRowCount() - 1 && j == jt.getColumnCount() - 1) { // jt.getColumnName(j)取得列名
+							sb.append("\"").append(jt.getColumnName(j)).append("\"").append(": ").append("\"")
+									.append(String.valueOf(jt.getValueAt(i, j)).replace('\n', ' ')).append("\"");
+						} else {
+							sb.append("\"").append(jt.getColumnName(j)).append("\"").append(": ").append("\"")
+									.append(String.valueOf(jt.getValueAt(i, j)).replace('\n', ' ')).append("\"")
+									.append(",");
+						}
+					}
+					if (i == jt.getRowCount() - 1) {
+						sb.append("}");
+					} else {
+						sb.append("},");
+					}
+				}
+				
+				sb.append("]");
+				sb.append("}");
+				return sb.toString();
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 过滤不需要的数据  待完善
+	 * */
+	private static void parseJson(String json) {
+		String[] arr=new String[]{"rowno","barcode","name","unit","sl","hjje","hjzk"};
+			if (!json.contains("detailinfo")) {
+				return;
+			}
+			for (int i = 0; i < arr.length; i++) {
+				if (!json.contains(arr[i])) {
+					return ;
+				}
+			}
+			
+			JSONObject jsonobj = JSON.parseObject(json);
+			JSONArray jsonArray = jsonobj.getJSONArray("detailinfo");
+			StringBuilder sb=new StringBuilder();
+			
+			for (int i = 0; i < jsonArray.size(); i++) {
+				JSONObject object = (JSONObject) jsonArray.get(i);
+				for (int j = 0; j < arr.length; j++) {
+					try {
+						String str = String.valueOf(object.get(arr[j]));
+						sb.append(str).append("  ");
+					} catch (Exception e) {
+						Pencil.writeLog(jsonArray.get(i).toString()+"--->"+e.toString());
+					//jsonarray.get(i)得到的竟然是zszke zsdjbh hyzklje等 为啥???
+					}
+				}
+				Pencil.writeLog(sb.toString());
+			}	
 	}
 }

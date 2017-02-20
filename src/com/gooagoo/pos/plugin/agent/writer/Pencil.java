@@ -51,6 +51,7 @@ public class Pencil {
 					if (os!=null) {
 						  os.write(header);
 				          os.write(data);
+				          
 					}
 				} 
 				}catch (Exception e) {
@@ -136,7 +137,7 @@ public class Pencil {
 	}
 	
 
-	//C:/Users/gag/Desktop
+	// C:/Users/gag/Desktop
 	public static void writeLog(String content){
 		File f1 = new File("./logs/");
 		if (!f1.exists()) {

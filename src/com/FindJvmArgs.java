@@ -17,7 +17,6 @@ import com.gooagoo.pos.plugin.agent.writer.Test;
 //Class-Path: lib/tools.jar
 public class FindJvmArgs {
 
-	
 	public static void main(String[] args) {
 		String dir=null;
 		if (args!=null && args.length>0) {
@@ -38,10 +37,8 @@ public class FindJvmArgs {
           while ((line=reader.readLine())!=null) {
         	  System.out.println(line);
         	  if (!(line.contains("FindJvmArgs") || line.contains("Jps") || line.contains("JCmd") )) {
-					
         		  line=line.replaceAll("[a-zA-Z]", "");
         		  Const.gen().add(line.trim()); 
-//					CMDUtils.doNext();真傻 在遍历啊 肯定执行多次
 				}
           }
           if (Const.gen().getPids()!=null && Const.gen().getPids().size()>0) {
@@ -49,7 +46,7 @@ public class FindJvmArgs {
           }else{
         	  System.out.println("进程集合为空!!!");
           }
-         
+          
           while ((line=errreader.readLine())!=null) {
         	  System.out.println(line);
         	  System.out.println("jps命令执行失败");

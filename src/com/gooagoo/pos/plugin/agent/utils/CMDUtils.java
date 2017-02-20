@@ -30,9 +30,6 @@ public class CMDUtils {
         return p;
     }
      
-    public static Process CMD(String cmd,String ...args){
-        return CMD(String.format(cmd, args));
-    }
     public static Process runCMD(String cmd,boolean isNeedMsg){
         Process p = null;
         try {
@@ -52,9 +49,6 @@ public class CMDUtils {
         return p;
     }
      
-    public static Process runCMD(String cmd,String ...args){
-        return runCMD(String.format(cmd, args));
-    }
      
     static class cmdResult implements Runnable{
         private InputStream ins;
@@ -75,7 +69,8 @@ public class CMDUtils {
             try {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(ins, Charset.forName("utf-8")));
                 String line = null;
-
+                
+                //tasklist命令通过传入的程序名 得到进程号
                 if ("success".equals(isSuccess)) {
                 while ((line=reader.readLine())!=null) {
 //                	System.out.println(line);
@@ -112,7 +107,7 @@ public class CMDUtils {
 
 					}
 				System.out.println("--------------------------------------------------分 割 线 ------------------------------------------");	
-                }else{
+                }else{   //捕捉对应得错误
                 	  while ((line=reader.readLine())!=null) {
 //  							System.out.println(line);
   							if (line.contains("AttachNotSupportedException: Unable to attach to 32-bit process running under WOW64")) {
@@ -124,6 +119,7 @@ public class CMDUtils {
 							}else if (line.contains("com.sun.tools.attach.AttachNotSupportedException: Unable to attach to 64-bit process")) {
 								System.out.println("进程号"+pid+"是64位进程,请选择64bit的jdk(7以上)");
 							}
+  							//java.io.IOException: 拒绝访问。 studio的进程拒绝访问 需要管理员权限运行命令行
   						}
                 }
             } catch (Exception e) {
@@ -166,9 +162,6 @@ public class CMDUtils {
 					executor.execute(new cmdResult(p.getErrorStream(),"error",pid));
 				}
 			}
-		
-		
-			
 			
 //			String[] arr=new String[]{"cmd.exe","/k","cd /","cd D:/ProgramFile/Java11/java7.0_51/bin","D:","jcmd "+pid+ " VM.system_properties"};
 //			Process p = Runtime.getRuntime().exec(arr);
@@ -176,12 +169,10 @@ public class CMDUtils {
 //            new Thread(new cmdResult(p.getErrorStream(),"error")).start();
 //			CMD("jcmd "+pid+ " VM.system_properties",true);
 //			Runtime.getRuntime().exec("jcmd "+pid+ "VM.system_properties");
+			
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
-		 
-		
-		
 		
 	}
  

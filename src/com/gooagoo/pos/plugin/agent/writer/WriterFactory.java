@@ -46,7 +46,7 @@ public class WriterFactory {
 		public void setOutputDirectory(String outputDirectory) {
 			this.outputDirectory = outputDirectory;
 		}
-
+		
 		public String getServer() {
 			return server;
 		}
@@ -165,9 +165,9 @@ public class WriterFactory {
 			this.properties = properties;
 		}
 		this.connectServer();
-
+		
 		this.monitor();
-
+		
 	}
 
 	/**
@@ -236,5 +236,5 @@ public class WriterFactory {
 		}
 		return os;
 	}
-
+	
 }
