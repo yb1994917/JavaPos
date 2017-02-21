@@ -53,7 +53,6 @@ public class FindJvmArgs {
           }
 		} catch (Exception e) {
 		}
-		
 	}
 	
 }

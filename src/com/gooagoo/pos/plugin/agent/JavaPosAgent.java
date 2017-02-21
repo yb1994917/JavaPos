@@ -119,6 +119,7 @@ public class JavaPosAgent {
 							System.out.println(vm.id()+"-user.dir-"+kv.getValue().toString());
 						}
 					}
+					
 					try {
 						File agentFile = new File(agent);
 						File iniFile=new File(iniPath);

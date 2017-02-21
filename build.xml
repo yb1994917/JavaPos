@@ -19,7 +19,7 @@
 	
 <!-- 编译 -->
 <target name="compile" depends="init" description="compile the source files">
-<javac srcdir="${src.dir}" destdir="${classes.dir}" target="1.7" includeantruntime="on">
+<javac srcdir="${src.dir}" destdir="${classes.dir}" target="1.6" includeantruntime="on">
  <compilerarg line="-encoding UTF-8 "/>   
 <classpath refid="master-classpath"/>
 </javac> 
@@ -29,15 +29,16 @@
 <target name="jar"  description="make .jar file">
 <mkdir dir="${dist.dir}" />
 <jar destfile="${dist.dir}/javaagent.jar" basedir="${classes.dir}">
-	  <manifest>
+<manifest>
+	  	<!-- value不需要空格 ant会自动在前面加空格-->
 	          <attribute name="Build-By" value="${user.name}"/>
-	          <attribute name="Main-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
-	          <attribute name="Premain-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
-	          <attribute name="Agent-Class" value=" com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	          <attribute name="Main-Class" value="com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	          <attribute name="Premain-Class" value="com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
+	          <attribute name="Agent-Class" value="com.gooagoo.pos.plugin.agent.JavaPosAgent"/>
 	          <attribute name="Can-Redefine-Classes" value="true"/>
 	          <attribute name="Can-Retransform-Classes" value="true"/>
 	          <attribute name="Can-Set-Native-Method-Prefix" value="true"/>
-	          <attribute name="Class-Path" value=" lib/tools.jar"/>
+	          <attribute name="Class-Path" value="lib/tools.jar"/>
 	   </manifest>
 </jar>
 </target>

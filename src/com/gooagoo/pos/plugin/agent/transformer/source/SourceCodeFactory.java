@@ -10,7 +10,6 @@ import com.gooagoo.pos.plugin.agent.writer.Pencil;
 public class SourceCodeFactory {
 
 	public static String createBefore(String methodName, CtClass[] parameterTypes) {
-		
 //		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();  
 //        String name = runtime.getName(); // format: "pid@hostname"  
 //        Pencil.writeLog("name--->"+name);
@@ -47,11 +46,9 @@ public class SourceCodeFactory {
 		cup.append("	   }catch(Exception e){\n").append("}\n").append("	}\n");
 		return cup.toString();
 		
-
 	}
 
 	public static String createAfter() throws Exception {
 		throw new Exception("not implements yet!");
 	}
-
 }
